@@ -1,0 +1,48 @@
+1. What is Pandas?
+
+Pandas is a Python library for working with structured/tabular data.
+
+Think of data like this:
+
+name	age	salary
+Andi	25	5000000
+Budi	30	7000000
+Citra	27	6500000
+
+In Python, we could represent this using lists/dictionaries.
+
+But imagine you have 100,000 rows.
+
+Doing this manually with lists would be painful.
+
+Pandas gives us a structure called a:
+
+DataFrame
+
+You can think of a DataFrame as a Python version of an Excel table,
+ but much more powerful for programming.
+
+DataFrame vs Series
+
+There are two important concepts.
+
+DataFrame
+
+A DataFrame is a table.
+
+        name  age
+0       Andi   25
+1       Budi   30
+2      Citra   27
+Series
+
+A Series is basically one column.
+
+0    Andi
+1    Budi
+2    Citra
+
+So:
+
+DataFrame = multiple columns
+Series = one column
