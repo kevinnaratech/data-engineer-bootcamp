@@ -1,0 +1,617 @@
+# Pertemuan 16 — Window Function
+
+## 1. Apa itu Window Function?
+
+Window Function adalah fungsi SQL yang melakukan perhitungan terhadap sekumpulan baris **tanpa menghilangkan detail setiap baris**.
+
+Berbeda dengan `GROUP BY`:
+
+```sql
+GROUP BY
+```
+
+menggabungkan banyak baris menjadi lebih sedikit baris.
+
+Sedangkan Window Function:
+
+```sql
+SUM(...) OVER(...)
+```
+
+tetap mempertahankan semua baris.
+
+---
+
+# 2. OVER()
+
+Window Function menggunakan:
+
+```sql
+FUNCTION() OVER(...)
+```
+
+`OVER()` menentukan **window/perhitungan** yang digunakan.
+
+Contoh:
+
+```sql
+ROW_NUMBER() OVER (
+    ORDER BY total DESC
+)
+```
+
+Mental model:
+
+```text
+FUNCTION()
+    ↓
+OVER(
+    PARTITION BY → kelompok mana?
+    ORDER BY     → urut berdasarkan apa?
+)
+```
+
+---
+
+# 3. PARTITION BY
+
+`PARTITION BY` membagi data menjadi beberapa kelompok **tanpa menghilangkan baris**.
+
+Contoh:
+
+```sql
+RANK() OVER (
+    PARTITION BY customer_id
+    ORDER BY total DESC
+)
+```
+
+Artinya:
+
+> Ranking order dilakukan secara terpisah untuk setiap customer.
+
+Misalnya:
+
+```text
+Customer 1 → rank 1, 2, 3
+Customer 2 → rank 1, 2
+Customer 3 → rank 1, 2, 3
+```
+
+Ranking akan **reset** ketika masuk ke customer berikutnya.
+
+### Mental model
+
+```text
+PARTITION BY = kelompok
+ORDER BY     = urutan
+FUNCTION     = aksi
+```
+
+---
+
+# 4. ROW_NUMBER()
+
+Memberikan nomor unik untuk setiap baris.
+
+```sql
+ROW_NUMBER() OVER (
+    ORDER BY total DESC
+)
+```
+
+Dengan `PARTITION BY`:
+
+```sql
+ROW_NUMBER() OVER (
+    PARTITION BY customer_id
+    ORDER BY total DESC
+)
+```
+
+Contoh:
+
+```text
+customer_id | total | row_number
+------------|-------|-----------
+1           | 500k  | 1
+1           | 300k  | 2
+1           | 100k  | 3
+2           | 700k  | 1
+2           | 200k  | 2
+```
+
+Nomor akan reset untuk setiap customer.
+
+---
+
+# 5. RANK()
+
+Memberikan ranking dan memberikan rank yang sama jika terdapat nilai yang sama.
+
+Contoh:
+
+```text
+total
+100
+100
+80
+70
+```
+
+Hasil:
+
+```text
+RANK()
+1
+1
+3
+4
+```
+
+Ada loncatan ranking setelah nilai yang sama.
+
+---
+
+# 6. DENSE_RANK()
+
+Mirip `RANK()`, tetapi tidak memiliki loncatan ranking.
+
+```text
+total
+100
+100
+80
+70
+```
+
+Hasil:
+
+```text
+DENSE_RANK()
+1
+1
+2
+3
+```
+
+### Perbedaan
+
+```text
+ROW_NUMBER → selalu unik
+RANK       → tie sama, ranking bisa lompat
+DENSE_RANK → tie sama, ranking tidak lompat
+```
+
+---
+
+# 7. LAG()
+
+`LAG()` digunakan untuk mengambil nilai dari **baris sebelumnya**.
+
+Contoh:
+
+```sql
+LAG(total) OVER (
+    ORDER BY order_date
+)
+```
+
+Untuk transaksi per customer:
+
+```sql
+LAG(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+Contoh:
+
+```text
+order_date | total | previous_total
+-----------|-------|---------------
+Jan 1      | 500k  | NULL
+Jan 5      | 750k  | 500k
+Jan 10     | 600k  | 750k
+```
+
+Baris pertama menghasilkan `NULL` karena tidak memiliki transaksi sebelumnya.
+
+---
+
+# 8. LEAD()
+
+`LEAD()` adalah kebalikan dari `LAG()`.
+
+`LEAD()` mengambil nilai dari **baris berikutnya**.
+
+```sql
+LEAD(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+Contoh:
+
+```text
+order_date | total | next_total
+-----------|-------|-----------
+Jan 1      | 500k  | 750k
+Jan 5      | 750k  | 600k
+Jan 10     | 600k  | NULL
+```
+
+### Ingat:
+
+```text
+LAG  → sebelumnya
+LEAD → berikutnya
+```
+
+---
+
+# 9. Difference dengan LAG()
+
+Kita bisa menghitung perubahan nilai dibanding transaksi sebelumnya.
+
+Rumus:
+
+```text
+difference = total sekarang - total sebelumnya
+```
+
+SQL:
+
+```sql
+total - LAG(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+) AS difference
+```
+
+Contoh:
+
+```text
+total | previous | difference
+------|----------|-----------
+500k  | NULL     | NULL
+750k  | 500k     | 250k
+600k  | 750k     | -150k
+```
+
+Nilai positif berarti naik.
+
+Nilai negatif berarti turun.
+
+---
+
+# 10. Percentage Change
+
+Untuk menghitung persentase perubahan:
+
+```text
+(current - previous)
+-------------------- × 100
+      previous
+```
+
+SQL:
+
+```sql
+(
+    total - LAG(total) OVER (
+        PARTITION BY customer_id
+        ORDER BY order_date
+    )
+)
+/
+LAG(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+* 100 AS percentage_change
+```
+
+Contoh:
+
+```text
+previous = 500k
+current  = 750k
+
+(750k - 500k) / 500k × 100
+= 50%
+```
+
+Dalam implementasi production, perlu menangani kemungkinan `previous = 0` agar tidak terjadi division by zero.
+
+---
+
+# 11. Aggregate + Window Function
+
+Window Function juga bisa menggunakan fungsi aggregate.
+
+Contoh:
+
+```sql
+SUM(total) OVER (
+    PARTITION BY customer_id
+) AS customer_total
+```
+
+Artinya:
+
+> Hitung total seluruh order customer, tetapi tetap tampilkan setiap order.
+
+Contoh:
+
+```text
+customer_id | order_id | total | customer_total
+------------|----------|-------|---------------
+1           | 1        | 500k  | 1.2m
+1           | 2        | 400k  | 1.2m
+1           | 3        | 300k  | 1.2m
+```
+
+Berbeda dengan:
+
+```sql
+SELECT customer_id, SUM(total)
+FROM orders
+GROUP BY customer_id;
+```
+
+`GROUP BY` menghilangkan detail order.
+
+Window Function tidak.
+
+---
+
+# 12. ORDER BY di dalam OVER() vs ORDER BY query
+
+Ini penting.
+
+```sql
+RANK() OVER (
+    ORDER BY total DESC
+)
+```
+
+`ORDER BY` di dalam `OVER()` menentukan **urutan yang digunakan untuk perhitungan window function**.
+
+Sedangkan:
+
+```sql
+SELECT ...
+FROM orders
+ORDER BY total DESC;
+```
+
+menentukan **urutan hasil yang ditampilkan**.
+
+Keduanya memiliki fungsi yang berbeda.
+
+---
+
+# 13. Pola Query yang Penting
+
+### Ranking per customer
+
+```sql
+RANK() OVER (
+    PARTITION BY customer_id
+    ORDER BY total DESC
+)
+```
+
+### Nomor urut transaksi customer
+
+```sql
+ROW_NUMBER() OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+### Transaksi sebelumnya
+
+```sql
+LAG(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+### Transaksi berikutnya
+
+```sql
+LEAD(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+### Total order customer tanpa GROUP BY
+
+```sql
+SUM(total) OVER (
+    PARTITION BY customer_id
+)
+```
+
+---
+
+# 14. Kombinasi Window Function
+
+Window Function bisa digunakan bersamaan.
+
+Contoh:
+
+```sql
+SELECT
+    customer_id,
+    id AS order_id,
+    order_date,
+    total,
+
+    RANK() OVER (
+        PARTITION BY customer_id
+        ORDER BY total DESC
+    ) AS order_rank,
+
+    LAG(total) OVER (
+        PARTITION BY customer_id
+        ORDER BY order_date
+    ) AS previous_total,
+
+    LEAD(total) OVER (
+        PARTITION BY customer_id
+        ORDER BY order_date
+    ) AS next_total,
+
+    total - LAG(total) OVER (
+        PARTITION BY customer_id
+        ORDER BY order_date
+    ) AS difference_from_previous
+
+FROM orders;
+```
+
+Query seperti ini sudah mulai mendekati analisis data yang sering digunakan di dunia kerja.
+
+---
+
+# 15. Use Case di Dunia Industri
+
+Window Function sangat sering digunakan untuk:
+
+* Ranking customer
+* Top N per group
+* Mencari transaksi terbesar per customer
+* Membandingkan transaksi sekarang dengan sebelumnya
+* Analisis revenue dari waktu ke waktu
+* Growth percentage
+* Perubahan harga
+* Previous/next transaction
+* Running total
+* Analisis performa per kategori
+* Data reporting dan analytics
+
+Untuk Data Engineer, Window Function juga penting karena sering muncul dalam proses **ETL/ELT dan data transformation**.
+
+---
+
+# 16. Kesalahan yang Harus Dihindari
+
+### 1. Lupa PARTITION BY
+
+Salah:
+
+```sql
+LAG(total) OVER (
+    ORDER BY order_date
+)
+```
+
+Jika requirement-nya "order sebelumnya dari customer yang sama", harus:
+
+```sql
+LAG(total) OVER (
+    PARTITION BY customer_id
+    ORDER BY order_date
+)
+```
+
+### 2. Salah membedakan RANK dan ROW_NUMBER
+
+Jika butuh **tepat N baris**:
+
+```sql
+ROW_NUMBER()
+```
+
+Jika ingin mempertahankan **ties**:
+
+```sql
+RANK()
+```
+
+### 3. Menggunakan GROUP BY ketika detail harus tetap muncul
+
+Jika requirement mengatakan:
+
+> "Jangan hilangkan detail order"
+
+pertimbangkan:
+
+```sql
+SUM(...) OVER(...)
+```
+
+bukan:
+
+```sql
+GROUP BY
+```
+
+---
+
+# 17. Cheat Sheet
+
+```text
+ROW_NUMBER() → nomor unik
+RANK()       → ranking + bisa lompat
+DENSE_RANK() → ranking tanpa lompat
+
+LAG()        → baris sebelumnya
+LEAD()       → baris berikutnya
+
+PARTITION BY → kelompok
+ORDER BY     → urutan dalam window
+
+SUM() OVER() → aggregate tanpa menghilangkan detail
+```
+
+Pola berpikir utama:
+
+```text
+Apa yang mau dilakukan?
+        ↓
+FUNCTION()
+
+Untuk kelompok siapa?
+        ↓
+PARTITION BY
+
+Urut berdasarkan apa?
+        ↓
+ORDER BY
+```
+
+## Kesimpulan Pertemuan 16
+
+Window Function memungkinkan kita melakukan **ranking, perbandingan antarbaris, dan aggregate** sambil tetap mempertahankan detail data.
+
+Empat pola yang wajib lu kuasai:
+
+```sql
+RANK() OVER(...)
+LAG() OVER(...)
+LEAD() OVER(...)
+SUM() OVER(...)
+```
+
+Dan yang paling penting:
+
+```sql
+PARTITION BY
+```
+
+menentukan **scope/kelompok perhitungan**, sedangkan:
+
+```sql
+ORDER BY
+```
+
+menentukan **urutan di dalam scope tersebut**.
