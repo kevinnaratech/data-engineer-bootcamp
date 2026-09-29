@@ -12,7 +12,7 @@ Every session's exercises are pushed to this repo, so the portfolio builds up al
 |---|---|---|---|---|
 | 1 | Python Fundamentals | 1–10 | [`PYTHON/`](./PYTHON) | ✅ Done |
 | 2 | SQL | 11–18 | [`SQL/`](./SQL) | ✅ Done |
-| 3 | Linux & Git | 19–21 | `LINUX-GIT/` | ⏳ Not started |
+| 3 | Linux & Git | 19–21 | `LINUX-GIT/` | 🔄 In Progress |
 | 4 | PostgreSQL | 22–25 | `POSTGRESQL/` | ⏳ Not started |
 | 5 | Data Modeling | 26–29 | `DATA-MODELING/` | ⏳ Not started |
 | 6 | ETL Fundamentals | 30–34 | `ETL/` | ⏳ Not started |
