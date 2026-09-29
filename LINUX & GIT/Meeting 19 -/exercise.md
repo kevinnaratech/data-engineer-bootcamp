@@ -7,6 +7,7 @@ pwd
 ```
 **Output:**
 ```
+/home/kevin
 
 ```
 **Penjelasan:** Dari `/home/kevin`, path relatif `p19_data/raw` langsung menunjuk ke tujuan tanpa menulis `/home/kevin`. `pwd` memastikan posisinya benar.
@@ -20,7 +21,8 @@ ls
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+archive  customers.csv
+
 ```
 **Penjelasan:** Posisi sudah di `raw/`, jadi `mkdir archive` otomatis membuatnya di sini. `ls` untuk verifikasi.
 
