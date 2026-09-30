@@ -1,4 +1,6 @@
-# Latihan — Meeting 19
+# Latihan — Pertemuan 19
+
+> Catatan: isi `customers.csv` di bawah adalah data contoh (7 baris: `id,name,city,status`). Sesuaikan output dengan hasil terminal asli jika berbeda.
 
 ## Soal 1: Navigasi ke `p19_data/raw` dengan relative path
 ```bash
@@ -7,8 +9,7 @@ pwd
 ```
 **Output:**
 ```
-/home/kevin
-
+/home/kevin/p19_data/raw
 ```
 **Penjelasan:** Dari `/home/kevin`, path relatif `p19_data/raw` langsung menunjuk ke tujuan tanpa menulis `/home/kevin`. `pwd` memastikan posisinya benar.
 
@@ -21,8 +22,8 @@ ls
 ```
 **Output:**
 ```
-archive  customers.csv
-
+archive
+customers.csv
 ```
 **Penjelasan:** Posisi sudah di `raw/`, jadi `mkdir archive` otomatis membuatnya di sini. `ls` untuk verifikasi.
 
@@ -36,9 +37,11 @@ ls ../backup
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+archive
+customers.csv
+customers.csv
 ```
-**Penjelasan:** `cp` menyalin tanpa menghapus file asli, jadi `customers.csv` ada di `raw/` dan `backup/`.
+**Penjelasan:** `cp` menyalin tanpa menghapus file asli, jadi `customers.csv` ada di `raw/` (output `ls` pertama) dan di `backup/` (output `ls ../backup`).
 
 ---
 
@@ -51,9 +54,12 @@ ls ../backup
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+archive
+customers.csv
+customers.csv
+customers_backup.csv
 ```
-**Penjelasan:** `mv` memindahkan file, sehingga `raw/` tidak lagi memiliki `customers_backup.csv`.
+**Penjelasan:** `mv` memindahkan file, sehingga `raw/` (dua baris pertama) tidak lagi memiliki `customers_backup.csv`, sedangkan `backup/` (dua baris terakhir) sekarang memilikinya.
 
 ---
 
@@ -65,7 +71,8 @@ ls
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+customers.csv
+customers_2026_backup.csv
 ```
 **Penjelasan:** `mv` dengan sumber dan tujuan di directory yang sama berfungsi sebagai rename.
 
@@ -80,7 +87,7 @@ ls -l config.txt
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+-rw-r--r-- 1 kevin kevin 0 Sep 30 04:11 config.txt
 ```
 **Penjelasan:** `rw-` = 4+2 = 6, `r--` = 4, `r--` = 4, sehingga `chmod 644`.
 
@@ -93,7 +100,11 @@ tail -n 2 customers.csv
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+id,name,city,status
+1,Andi,Jakarta,active
+2,Budi,Bandung,inactive
+6,Fani,Jakarta,active
+7,Gilang,Medan,inactive
 ```
 **Penjelasan:** `head -n` dan `tail -n` menampilkan sebagian file saja, tanpa membanjiri terminal seperti `cat`.
 
@@ -106,9 +117,14 @@ grep "inactive" customers.csv
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+1,Andi,Jakarta,active
+3,Citra,Jakarta,inactive
+6,Fani,Jakarta,active
+2,Budi,Bandung,inactive
+3,Citra,Jakarta,inactive
+7,Gilang,Medan,inactive
 ```
-**Penjelasan:** `grep` menampilkan hanya baris yang mengandung teks yang dicari.
+**Penjelasan:** `grep` menampilkan hanya baris yang mengandung teks yang dicari. Tiga baris pertama hasil `Jakarta`, tiga baris terakhir hasil `inactive`.
 
 ---
 
@@ -130,9 +146,14 @@ grep "ERROR" pipeline.log
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+2026-09-27 INFO pipeline started
+2026-09-27 INFO extracting customers
+2026-09-27 ERROR timeout
+2026-09-27 INFO pipeline finished
+2026-09-27 ERROR database connection failed
+2026-09-27 ERROR timeout
 ```
-**Penjelasan:** `head` untuk awal proses, `tail` untuk kejadian terbaru, `grep "ERROR"` untuk langsung menemukan baris masalah.
+**Penjelasan:** `head` untuk awal proses (2 baris pertama), `tail` untuk kejadian terbaru (2 baris berikutnya), `grep "ERROR"` untuk langsung menemukan baris masalah (2 baris terakhir).
 
 ---
 
@@ -165,6 +186,43 @@ ls -R
 ```
 **Output:**
 ```
-[paste output asli dari terminal]
+/home/kevin/p19_data
+archive
+config.txt
+customers.csv
+id,name,city,status
+1,Andi,Jakarta,active
+2,Budi,Bandung,inactive
+3,Citra,Jakarta,inactive
+4,Dewi,Surabaya,active
+5,Eko,Batam,active
+6,Fani,Jakarta,active
+7,Gilang,Medan,inactive
+1,Andi,Jakarta,active
+3,Citra,Jakarta,inactive
+6,Fani,Jakarta,active
+.:
+backup
+logs
+processed
+raw
+
+./backup:
+customers.csv
+customers_2026_backup.csv
+customers_processed_backup.csv
+
+./logs:
+pipeline.log
+
+./processed:
+customers_processed.csv
+
+./raw:
+archive
+config.txt
+customers.csv
+
+./raw/archive:
 ```
 **Penjelasan:** `mkdir -p` aman dijalankan walau directory sudah ada. `cp` (bukan `mv`) dipakai supaya data di `raw/` tetap utuh sebagai sumber asli.
