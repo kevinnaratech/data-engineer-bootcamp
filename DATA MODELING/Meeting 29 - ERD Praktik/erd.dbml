@@ -1,0 +1,46 @@
+
+Table customer{
+  id uuid [primary key]
+  name varchar
+  nohp varchar
+  email varchar
+  created_at timestamp
+}
+
+Table driver {
+  id integer [primary key]
+  name varchar
+  phone  varchar
+}
+
+Table vehicle {
+  id uuid [primary key]
+  driver_id integer [ref: > driver.id]
+  vehicle_number varchar
+  vehicle_type varchar
+}
+
+Table PaymentMethod {
+id integer [primary key]
+customer_id uuid [ref: >customer.id]
+}
+
+Table trip {
+  id uuid [primary key]
+  customer_id uuid [ref: > customer.id]
+  driver_id integer [ref: > driver.id]
+  pickup_address_id uuid [ref: > address.id]
+  destination_address_id uuid [ref: > address.id]
+  payment_method_id integer [ref: > PaymentMethod.id]
+  vehicle_id uuid [ref: > vehicle.id]
+  fare decimal
+  status varchar
+  trip_date timestamptz
+}
+
+Table address {
+  id uuid [primary key]
+  customer_id uuid [ref: > customer.id]
+  address varchar
+}
+
